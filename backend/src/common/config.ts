@@ -50,7 +50,37 @@ export function validateConfig(env: Record<string, string | undefined>) {
       'Production requires COOKIE_SECURE=true and an HTTPS FRONTEND_ORIGIN',
     );
   }
+  validateGitHubConfig(env);
   return env;
+}
+
+export const GITHUB_SETTINGS = [
+  'GITHUB_APP_ID',
+  'GITHUB_APP_SLUG',
+  'GITHUB_APP_PRIVATE_KEY_PATH',
+  'GITHUB_WEBHOOK_SECRET',
+] as const;
+
+// GitHub is optional, but half a configuration is always a mistake.
+function validateGitHubConfig(env: Record<string, string | undefined>) {
+  const missing = GITHUB_SETTINGS.filter((name) => !env[name]);
+  if (missing.length === GITHUB_SETTINGS.length) return;
+  if (missing.length > 0) {
+    throw new Error(
+      `GitHub is partly configured; also set ${missing.join(', ')}`,
+    );
+  }
+  if (!/^[1-9]\d*$/.test(String(env.GITHUB_APP_ID))) {
+    throw new Error('GITHUB_APP_ID must be the numeric App ID');
+  }
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(String(env.GITHUB_APP_SLUG))) {
+    throw new Error(
+      'GITHUB_APP_SLUG must be the app name from its URL, such as grasyn-dev',
+    );
+  }
+  if (String(env.GITHUB_WEBHOOK_SECRET).length < 16) {
+    throw new Error('GITHUB_WEBHOOK_SECRET must be at least 16 characters');
+  }
 }
 
 export function accessMaxAgeMs(duration: string): number {

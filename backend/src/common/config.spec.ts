@@ -17,6 +17,24 @@ describe('Configuration', () => {
   ])('rejects invalid settings %p', (settings) => {
     expect(() => validateConfig({ ...valid, ...settings })).toThrow();
   });
+  const github = {
+    GITHUB_APP_ID: '123456',
+    GITHUB_APP_SLUG: 'grasyn-dev',
+    GITHUB_APP_PRIVATE_KEY_PATH: './grasyn-github.pem',
+    GITHUB_WEBHOOK_SECRET: 'x'.repeat(32),
+  };
+  it('accepts a complete GitHub App configuration', () =>
+    expect(() => validateConfig({ ...valid, ...github })).not.toThrow());
+  it.each([
+    { GITHUB_WEBHOOK_SECRET: undefined },
+    { GITHUB_APP_ID: 'my-app' },
+    { GITHUB_APP_SLUG: 'Grasyn Dev' },
+    { GITHUB_WEBHOOK_SECRET: 'short' },
+  ])('rejects incomplete or malformed GitHub settings %p', (settings) => {
+    expect(() =>
+      validateConfig({ ...valid, ...github, ...settings }),
+    ).toThrow();
+  });
   it('keeps cookie duration aligned with configured JWT duration', () => {
     expect(accessMaxAgeMs('1h')).toBe(3600000);
     expect(accessMaxAgeMs('15m')).toBe(900000);

@@ -18,11 +18,15 @@ import {
   TASK_STATUSES,
   TASK_STATUS_LABELS,
 } from '../../shared/lib/labels'
+import { Badge } from '../../shared/ui/Badge'
 import { Button } from '../../shared/ui/Button'
 import { Input } from '../../shared/ui/Input'
 import { Select } from '../../shared/ui/Select'
 import { notify } from '../../shared/ui/notify'
 import { QueryError, Skeleton } from '../../shared/ui/PageState'
+import { ViewingNow } from '../../shared/realtime/PresenceAvatars'
+import { TaskKey } from '../../shared/ui/TaskKey'
+import { TaskCode } from '../code/CodeActivity'
 
 export function TaskDetailPage() {
   const { taskId } = useParams()
@@ -89,7 +93,7 @@ function TaskEditor({ task, comments, commentsLoading, activity, members }) {
       queryClient.setQueryData(keys.task(taskId), data)
       queryClient.invalidateQueries({ queryKey: keys.projectTasks(data.task.projectId) })
       queryClient.invalidateQueries({ queryKey: keys.dashboard(activeWorkspace.id) })
-      queryClient.invalidateQueries({ queryKey: keys.activity('task', taskId) })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
       queryClient.invalidateQueries({
         queryKey: ['workspace-tasks', activeWorkspace.id],
       })
@@ -105,7 +109,9 @@ function TaskEditor({ task, comments, commentsLoading, activity, members }) {
     mutationFn: (body) => api.post(`/tasks/${taskId}/comments`, { body }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.comments(taskId) })
-      queryClient.invalidateQueries({ queryKey: keys.activity('task', taskId) })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+      queryClient.invalidateQueries({ queryKey: keys.dashboard(activeWorkspace.id) })
+      queryClient.invalidateQueries({ queryKey: keys.task(taskId) })
       queryClient.invalidateQueries({
         queryKey: keys.notifications(activeWorkspace.id),
       })
@@ -143,6 +149,32 @@ function TaskEditor({ task, comments, commentsLoading, activity, members }) {
         <ArrowLeft className="size-4" />
         {task.project?.name ?? 'Project'}
       </Link>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <TaskKey task={task} copyable />
+        <ViewingNow taskId={task.id} />
+      </div>
+
+      <div className="mt-4 rounded-xl border border-border bg-surface p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone={canPlan ? 'success' : canExecute ? 'primary' : 'muted'}>
+            {canPlan
+              ? 'Full task control'
+              : canExecute
+                ? 'Execution access'
+                : 'View only'}
+          </Badge>
+          <span className="text-caption text-muted-foreground">
+            Your role: {activeWorkspace.role}
+          </span>
+        </div>
+        <p className="mt-2 text-body-sm text-muted-foreground">
+          {canPlan
+            ? 'You can edit planning fields, assignment, dates, status, and description.'
+            : canExecute
+              ? 'You can update status and description because this task is assigned to you.'
+              : 'You can read this task, but only the assignee or a workspace manager can change it.'}
+        </p>
+      </div>
 
       {!canExecute ? (
         <div
@@ -248,6 +280,19 @@ function TaskEditor({ task, comments, commentsLoading, activity, members }) {
           </Button>
         ) : null}
       </form>
+
+      <TaskCode
+        task={task}
+        marking={saveTask.isPending}
+        onMarkDone={
+          canExecute
+            ? () => {
+                setForm((current) => ({ ...current, status: 'DONE' }))
+                saveTask.mutate({ status: 'DONE' })
+              }
+            : null
+        }
+      />
 
       <div className="mt-10 grid gap-8 lg:grid-cols-2">
         <CommentThread

@@ -1,0 +1,94 @@
+/* Landing-only styles. Everything else uses Tailwind tokens. */
+
+.lp-dot-grid {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgb(255 255 255 / 0.09) 1px,
+    transparent 0
+  );
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at 60% 45%, black 30%, transparent 75%);
+}
+
+.lp-dot-grid-light {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgb(15 23 42 / 0.08) 1px,
+    transparent 0
+  );
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse at 50% 50%, black 25%, transparent 70%);
+}
+
+.lp-glow {
+  background: radial-gradient(
+    circle,
+    rgb(102 149 185 / 0.35) 0%,
+    rgb(51 104 160 / 0.12) 40%,
+    transparent 70%
+  );
+}
+
+.lp-hex {
+  clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%);
+}
+
+/* Scenes add .is-animated only when their scroll choreography is active, so
+   the static markup below stays the readable fallback for mobile and
+   reduced motion. */
+.lp-stack {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.is-animated .lp-stack > * {
+  grid-area: 1 / 1;
+}
+
+.lp-flow-stage {
+  display: none;
+}
+
+.is-animated .lp-flow-stage {
+  display: block;
+}
+
+.is-animated .lp-flow-list {
+  display: none;
+}
+
+.lp-motion-only {
+  display: none;
+}
+
+.is-animated .lp-motion-only {
+  display: inline;
+}
+
+.is-animated .lp-static-only {
+  display: none;
+}
+
+.is-animated .lp-chat-window {
+  height: 26rem;
+}
+
+@keyframes lp-scroll-dot {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lp-scroll-dot {
+    animation: lp-scroll-dot 1.8s var(--ease-glide) infinite;
+  }
+}

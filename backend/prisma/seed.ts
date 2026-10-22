@@ -63,6 +63,8 @@ async function main() {
     data: {
       name: 'Lumen Labs',
       slug: 'lumen-labs',
+      taskPrefix: 'LUM',
+      taskCounter: 5,
       ownerId: alex.id,
       members: {
         create: [
@@ -109,6 +111,7 @@ async function main() {
   const authTask = await prisma.task.create({
     data: {
       workspaceId: workspace.id,
+      number: 1,
       projectId: platform.id,
       title: 'Ship cookie-based authentication',
       description:
@@ -123,6 +126,7 @@ async function main() {
   const kanbanTask = await prisma.task.create({
     data: {
       workspaceId: workspace.id,
+      number: 2,
       projectId: platform.id,
       title: 'Build the project Kanban board',
       description:
@@ -137,6 +141,7 @@ async function main() {
   const inviteTask = await prisma.task.create({
     data: {
       workspaceId: workspace.id,
+      number: 3,
       projectId: platform.id,
       title: 'Invite the rest of the squad',
       description: 'Workspace invites with role-aware permissions.',
@@ -150,6 +155,7 @@ async function main() {
   await prisma.task.create({
     data: {
       workspaceId: workspace.id,
+      number: 4,
       projectId: platform.id,
       title: 'Write the workspace catch-up notes',
       description:
@@ -165,6 +171,7 @@ async function main() {
   await prisma.task.create({
     data: {
       workspaceId: workspace.id,
+      number: 5,
       projectId: design.id,
       title: 'Document graphite + teal tokens',
       description:

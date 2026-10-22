@@ -7,9 +7,6 @@ node_modules
 dist
 dist-ssr
 coverage
-__pycache__
-*.py[cod]
-*.tsbuildinfo
 
 # Env
 .env

@@ -9,8 +9,10 @@ import { WorkspaceRole } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService, canManageMembers } from '../common/access.service';
+import { defaultTaskPrefix } from '../common/task-key';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
+import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 
 function slugify(name: string) {
   const base = name
@@ -42,6 +44,7 @@ export class WorkspacesService {
         data: {
           name: dto.name.trim(),
           slug: slugify(dto.name),
+          taskPrefix: defaultTaskPrefix(dto.name),
           ownerId: userId,
           members: {
             create: { userId, role: WorkspaceRole.OWNER },
@@ -85,6 +88,41 @@ export class WorkspacesService {
         message: 'Workspace not found',
       });
     }
+    return { workspace: { ...workspace, role: membership.role } };
+  }
+
+  async update(userId: string, workspaceId: string, dto: UpdateWorkspaceDto) {
+    const membership = await this.access.requireRoles(userId, workspaceId, [
+      WorkspaceRole.OWNER,
+      WorkspaceRole.ADMIN,
+    ]);
+    const workspace = await this.prisma.$transaction(async (tx) => {
+      const before = await tx.workspace.findUniqueOrThrow({
+        where: { id: workspaceId },
+      });
+      const updated = await tx.workspace.update({
+        where: { id: workspaceId },
+        data: { name: dto.name, taskPrefix: dto.taskPrefix },
+      });
+      const changes = (['name', 'taskPrefix'] as const).filter(
+        (field) => dto[field] !== undefined && dto[field] !== before[field],
+      );
+      if (changes.length > 0) {
+        await tx.auditEvent.create({
+          data: {
+            workspaceId,
+            actorId: userId,
+            action: 'workspace.updated',
+            metadata: {
+              changes,
+              before: { name: before.name, taskPrefix: before.taskPrefix },
+              after: { name: updated.name, taskPrefix: updated.taskPrefix },
+            },
+          },
+        });
+      }
+      return updated;
+    });
     return { workspace: { ...workspace, role: membership.role } };
   }
 
@@ -346,6 +384,13 @@ export class WorkspacesService {
       }),
       this.prisma.task.updateMany({
         where: { workspaceId, assigneeId: memberUserId },
+        data: { assigneeId: null },
+      }),
+      this.prisma.meetingParticipant.deleteMany({
+        where: { userId: memberUserId, meeting: { workspaceId } },
+      }),
+      this.prisma.meetingActionItem.updateMany({
+        where: { assigneeId: memberUserId, meeting: { workspaceId } },
         data: { assigneeId: null },
       }),
       this.prisma.workspaceMember.delete({ where: { id: target.id } }),

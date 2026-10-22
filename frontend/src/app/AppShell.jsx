@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import {
@@ -18,6 +18,11 @@ import { useAuth } from '../features/auth/AuthContext'
 import { useWorkspace } from '../features/workspaces/WorkspaceContext'
 import { api } from '../shared/api/client'
 import { keys } from '../shared/api/keys'
+import { OnlineMembers } from '../shared/realtime/PresenceAvatars'
+import { PresenceContext } from '../shared/realtime/presence'
+import { useWorkspaceRealtime } from '../shared/realtime/useWorkspaceRealtime'
+import { ROLE_LABELS } from '../shared/lib/labels'
+import { Badge } from '../shared/ui/Badge'
 import { Button } from '../shared/ui/Button'
 import { Logo } from '../shared/ui/Logo'
 import { notify } from '../shared/ui/notify'
@@ -35,14 +40,23 @@ export function AppShell() {
   const { user, logout } = useAuth()
   const { workspaces, activeWorkspace, setActiveWorkspace } = useWorkspace()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const mainRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const presence = useWorkspaceRealtime(activeWorkspace.id)
+
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 })
+  }, [pathname])
 
   const { data: notificationData } = useQuery({
-    queryKey: keys.notifications(activeWorkspace.id),
+    queryKey: keys.notificationSummary(activeWorkspace.id),
     queryFn: () =>
       api.get(`/workspaces/${activeWorkspace.id}/notifications?pageSize=1`),
+    refetchInterval: 30_000,
   })
   const unreadCount = notificationData?.unreadCount ?? 0
+  const roleLabel = ROLE_LABELS[activeWorkspace.role] ?? activeWorkspace.role
 
   async function handleLogout() {
     try {
@@ -79,15 +93,23 @@ export function AppShell() {
                 </option>
               ))}
             </select>
+            <Badge tone="muted" className="mt-2">
+              {roleLabel}
+            </Badge>
           </label>
         ) : (
-          <p className="mt-3 truncate text-caption text-muted-foreground">
-            {activeWorkspace.name}
-          </p>
+          <div className="mt-3">
+            <p className="truncate text-body-sm font-medium">
+              {activeWorkspace.name}
+            </p>
+            <Badge tone="muted" className="mt-2">
+              {roleLabel}
+            </Badge>
+          </div>
         )}
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 p-3">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3">
         {NAV.map((item) => {
           const Icon = item.icon
           const showBadge = item.to === '/app/notifications' && unreadCount > 0
@@ -119,6 +141,8 @@ export function AppShell() {
         })}
       </nav>
 
+      <OnlineMembers />
+
       <div className="border-t border-border p-3">
         <NavLink
           to="/app/settings/profile"
@@ -147,7 +171,8 @@ export function AppShell() {
   )
 
   return (
-    <div className="flex min-h-svh bg-background text-foreground">
+    <PresenceContext.Provider value={presence}>
+    <div className="flex h-svh overflow-hidden bg-background text-foreground">
       {menuOpen ? (
         <button
           type="button"
@@ -159,15 +184,15 @@ export function AppShell() {
 
       <aside
         className={clsx(
-          'fixed inset-y-0 left-0 z-30 w-60 flex-col border-r border-border bg-surface md:static md:flex',
+          'fixed inset-y-0 left-0 z-30 w-60 shrink-0 flex-col border-r border-border bg-surface md:static md:flex md:h-full',
           menuOpen ? 'flex' : 'hidden',
         )}
       >
         {sidebar}
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-border bg-surface px-4 py-3 md:hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="flex shrink-0 items-center gap-3 border-b border-border bg-surface px-4 py-3 md:hidden">
           <Button
             variant="ghost"
             size="sm"
@@ -178,12 +203,13 @@ export function AppShell() {
           </Button>
           <Logo size="sm" />
         </header>
-        <main className="min-w-0 flex-1 overflow-auto">
-          <div className="mx-auto max-w-6xl p-4 sm:p-6">
+        <main ref={mainRef} className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
             <Outlet />
           </div>
         </main>
       </div>
     </div>
+    </PresenceContext.Provider>
   )
 }

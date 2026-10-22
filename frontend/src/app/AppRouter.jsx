@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { GuestRoute, ProtectedRoute } from '../features/auth/RouteGuards'
 import { AuthShell } from '../features/auth/AuthShell'
@@ -6,13 +7,13 @@ import { RegisterPage } from '../features/auth/RegisterPage'
 import { ProfilePage } from '../features/auth/ProfilePage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { UiSandboxPage } from '../features/dev/UiSandboxPage'
-import { LandingPage } from '../features/marketing/LandingPage'
 import { NotFoundPage } from '../features/marketing/NotFoundPage'
 import { ProjectsPage } from '../features/projects/ProjectsPage'
 import { ProjectDetailPage } from '../features/projects/ProjectDetailPage'
 import { MyTasksPage } from '../features/tasks/MyTasksPage'
 import { ProjectBoardPage } from '../features/tasks/ProjectBoardPage'
 import { TaskDetailPage } from '../features/tasks/TaskDetailPage'
+import { MeetingDetailPage } from '../features/meetings/MeetingDetailPage'
 import { ActivityPage } from '../features/activity/ActivityPage'
 import { NotificationsPage } from '../features/notifications/NotificationsPage'
 import { WorkspaceSettingsPage } from '../features/workspaces/WorkspaceSettingsPage'
@@ -20,10 +21,24 @@ import { WorkspaceGate } from '../features/workspaces/WorkspaceGate'
 import { InviteAcceptPage } from '../features/workspaces/InviteAcceptPage'
 import { AppShell } from './AppShell'
 
+// The landing page carries the animation libraries; keep them out of the app bundle.
+const LandingPage = lazy(() =>
+  import('../features/marketing/LandingPage').then((module) => ({
+    default: module.LandingPage,
+  })),
+)
+
 export function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route
+        path="/"
+        element={
+          <Suspense fallback={<div className="min-h-svh bg-neutral-950" />}>
+            <LandingPage />
+          </Suspense>
+        }
+      />
 
       <Route
         element={
@@ -54,6 +69,7 @@ export function AppRouter() {
         <Route path="projects/:projectId/board" element={<ProjectBoardPage />} />
         <Route path="tasks" element={<MyTasksPage />} />
         <Route path="tasks/:taskId" element={<TaskDetailPage />} />
+        <Route path="meetings/:meetingId" element={<MeetingDetailPage />} />
         <Route path="activity" element={<ActivityPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="settings/workspace" element={<WorkspaceSettingsPage />} />

@@ -1,17 +1,22 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { HttpErrorFilter } from './common/filters/http-error.filter';
 
-export function setupApp(app: INestApplication) {
+export function setupApp(app: NestExpressApplication) {
   const config = app.get(ConfigService);
   const origin =
     config.get<string>('FRONTEND_ORIGIN') ?? 'http://localhost:5173';
   app.enableShutdownHooks();
 
   app.setGlobalPrefix('api');
+  // Default parser is off so this 1mb limit is the one that runs. GitHub
+  // push payloads can pass 100kb, and rawBody: true keeps the signed bytes.
+  app.useBodyParser('json', { limit: '1mb' });
+  app.useBodyParser('urlencoded', { extended: true, limit: '1mb' });
   app.use(helmet());
   app.use(cookieParser());
   app.use((req: Request, res: Response, next: NextFunction) => {

@@ -40,6 +40,7 @@ async function request(path, { method = 'GET', body } = {}, canRefresh = true) {
       credentials: 'include',
       headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(15_000),
     })
   } catch {
     throw new ApiError({

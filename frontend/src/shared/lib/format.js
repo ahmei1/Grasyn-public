@@ -1,7 +1,10 @@
 const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+// Due dates are stored as UTC midnight; formatting in local time would show
+// the previous day for anyone west of UTC.
 const shortDate = new Intl.DateTimeFormat('en', {
   day: 'numeric',
   month: 'short',
+  timeZone: 'UTC',
 })
 const shortDateTime = new Intl.DateTimeFormat('en', {
   day: 'numeric',
@@ -51,9 +54,24 @@ export function toDateInput(iso) {
   return date.toISOString().slice(0, 10)
 }
 
+/** Local YYYY-MM-DDTHH:mm for <input type="datetime-local">. */
+export function toDateTimeInput(iso) {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return local.toISOString().slice(0, 16)
+}
+
+/** Inverse of toDateTimeInput: the browser reads the value as local time. */
+export function fromDateTimeInput(value) {
+  return value ? new Date(value).toISOString() : null
+}
+
 export function isOverdue(iso) {
   if (!iso) return false
-  const due = new Date(iso)
-  due.setHours(23, 59, 59, 999)
-  return due.getTime() < Date.now()
+  const due = toDateInput(iso)
+  if (!due) return false
+  // Same UTC calendar rule the dashboard API uses.
+  return due < new Date().toISOString().slice(0, 10)
 }

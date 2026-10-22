@@ -13,16 +13,19 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useSortable } from '@dnd-kit/sortable'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, CalendarDays } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useWorkspace } from '../workspaces/WorkspaceContext'
 import { api } from '../../shared/api/client'
 import { keys } from '../../shared/api/keys'
+import { formatDate, isOverdue } from '../../shared/lib/format'
 import { TASK_STATUSES, TASK_STATUS_LABELS } from '../../shared/lib/labels'
 import { canMoveTask } from '../../shared/lib/permissions'
 import { Badge } from '../../shared/ui/Badge'
 import { QueryError, Skeleton } from '../../shared/ui/PageState'
 import { notify } from '../../shared/ui/notify'
+import { TaskKey } from '../../shared/ui/TaskKey'
+import { ViewingNow } from '../../shared/realtime/PresenceAvatars'
 
 function groupTasks(tasks) {
   const groups = Object.fromEntries(TASK_STATUSES.map((status) => [status, []]))
@@ -151,6 +154,7 @@ export function ProjectBoardPage() {
       <p className="mt-1 text-body-sm text-muted-foreground">
         Admins can move any card. Members can move cards assigned to them.
       </p>
+      <ViewingNow projectId={projectId} className="mt-3" />
 
       <DndContext
         sensors={sensors}
@@ -204,6 +208,11 @@ function BoardColumn({ status, tasks, role, userId }) {
               canMove={canMoveTask(role, userId, task)}
             />
           ))}
+          {tasks.length === 0 ? (
+            <li className="rounded-lg border border-dashed border-border p-3 text-caption text-muted-foreground">
+              No tasks here yet.
+            </li>
+          ) : null}
         </ul>
       </SortableContext>
     </section>
@@ -231,13 +240,26 @@ function SortableTaskCard({ task, canMove }) {
 }
 
 function TaskCard({ task, overlay = false, canMove = true }) {
+  const overdue = task.status !== 'DONE' && isOverdue(task.dueDate)
   const content = (
     <div
-      className={`rounded-lg border border-border bg-surface p-3 shadow-xs ${
-        overlay ? 'shadow-lg' : ''
-      }`}
+      className={`rounded-lg border bg-surface p-3 shadow-xs ${
+        overdue ? 'border-error-700/40' : 'border-border'
+      } ${overlay ? 'shadow-lg' : ''}`}
     >
+      <TaskKey task={task} className="mb-0.5 block" />
       <p className="text-body-sm font-medium">{task.title}</p>
+      {task.dueDate && (
+        <p
+          className={`mt-1.5 flex items-center gap-1 text-caption ${
+            overdue ? 'font-medium text-error-700' : 'text-muted-foreground'
+          }`}
+        >
+          <CalendarDays className="size-3.5" aria-hidden />
+          {overdue ? 'Overdue · ' : 'Due '}
+          {formatDate(task.dueDate)}
+        </p>
+      )}
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className="truncate text-caption text-muted-foreground">
           {task.assignee?.name ?? 'Unassigned'}

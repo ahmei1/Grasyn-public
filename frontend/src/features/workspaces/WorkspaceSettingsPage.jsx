@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useWorkspace } from './WorkspaceContext'
+import { GitHubSettings } from './GitHubSettings'
 import { api } from '../../shared/api/client'
 import { keys } from '../../shared/api/keys'
 import { ROLE_LABELS } from '../../shared/lib/labels'
@@ -62,6 +63,11 @@ export function WorkspaceSettingsPage() {
       api.del(`/workspaces/${workspaceId}/members/${userId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.members(workspaceId) })
+      // Removing a member unassigns their tasks.
+      queryClient.invalidateQueries({ queryKey: keys.dashboard(workspaceId) })
+      queryClient.invalidateQueries({ queryKey: ['workspace-tasks', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['project-tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['task'] })
       notify.success('Member removed.')
     },
     onError: (mutationError) => notify.apiError(mutationError),
@@ -78,6 +84,9 @@ export function WorkspaceSettingsPage() {
         title="Workspace settings"
         description={`${activeWorkspace.name} · your role is ${ROLE_LABELS[activeWorkspace.role] ?? activeWorkspace.role}`}
       />
+
+      <TaskKeySettings key={activeWorkspace.id} canManage={canManage} />
+      <GitHubSettings canManage={canManage} />
 
       {canManage ? (
         <form
@@ -195,5 +204,86 @@ export function WorkspaceSettingsPage() {
         ))}
       </ul>
     </div>
+  )
+}
+
+const PREFIX_PATTERN = /^[A-Z][A-Z0-9]{1,4}$/
+
+function TaskKeySettings({ canManage }) {
+  const { activeWorkspace, replaceWorkspace } = useWorkspace()
+  const current = activeWorkspace.taskPrefix
+  const [prefix, setPrefix] = useState(current)
+  const cleaned = prefix.trim().toUpperCase()
+  const valid = PREFIX_PATTERN.test(cleaned)
+
+  const save = useMutation({
+    mutationFn: (taskPrefix) =>
+      api.patch(`/workspaces/${activeWorkspace.id}`, { taskPrefix }),
+    onSuccess: (data) => {
+      replaceWorkspace(data.workspace)
+      setPrefix(data.workspace.taskPrefix)
+      notify.success('Task prefix saved.')
+    },
+    onError: (mutationError) => notify.apiError(mutationError),
+  })
+
+  return (
+    <section className="mt-8 rounded-xl border border-border bg-surface p-4">
+      <h2 className="font-display text-h4 font-semibold">Task keys</h2>
+      <p className="mt-1 text-body-sm text-muted-foreground">
+        Every task gets a short key, like{' '}
+        <span className="font-mono text-foreground">{current}-12</span>. Put
+        it in a branch name, commit message, or pull request title to link
+        code to the task.
+      </p>
+      {canManage ? (
+        <form
+          className="mt-4 flex flex-wrap items-end gap-3"
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (valid && cleaned !== current) save.mutate(cleaned)
+          }}
+        >
+          <div className="w-40">
+            <Input
+              label="Prefix"
+              value={prefix}
+              maxLength={5}
+              autoComplete="off"
+              spellCheck={false}
+              className="font-mono uppercase"
+              error={
+                prefix && !valid
+                  ? '2–5 letters or digits, starting with a letter'
+                  : undefined
+              }
+              onChange={(event) => setPrefix(event.target.value)}
+            />
+          </div>
+          <Button
+            type="submit"
+            size="md"
+            variant="outline"
+            loading={save.isPending}
+            disabled={!valid || cleaned === current}
+          >
+            Save prefix
+          </Button>
+          {valid && cleaned !== current ? (
+            <p className="basis-full text-caption text-muted-foreground">
+              Every key changes to {cleaned}-…, and code that mentions the old{' '}
+              {current} keys will no longer link.
+            </p>
+          ) : null}
+        </form>
+      ) : (
+        <p className="mt-3 text-body-sm">
+          Prefix: <span className="font-mono font-medium">{current}</span>
+          <span className="ml-2 text-caption text-muted-foreground">
+            Only admins can change it.
+          </span>
+        </p>
+      )}
+    </section>
   )
 }

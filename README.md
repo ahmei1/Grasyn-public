@@ -1,8 +1,8 @@
 # Grasyn
 
-Grasyn is a connected work environment for small software teams. This repository is the **Phase 1 MVP**: authentication, workspaces, members, projects, tasks, comments, activity, notifications, and a dashboard.
+Grasyn is a connected work environment for small software teams. This repository is the runnable app through **Phase 3**: authentication, workspaces, members, projects, tasks with short keys, comments, live updates, project discussions, meeting records, and GitHub pushes and pull requests linked by those keys.
 
-The product idea is not “another Jira.” It is a **shared team context** that later phases can hang communication, GitHub, meetings, and AI on top of — without rewriting the core.
+The product idea is not “another Jira.” It is a **shared team context** that later phases can hang video calls and AI summaries on top of — without rewriting the core.
 
 ## How we split the work
 

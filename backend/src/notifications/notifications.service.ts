@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessService } from '../common/access.service';
+import { EventsService } from '../common/events.service';
 import { paginationMeta } from '../common/dto/pagination.dto';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly access: AccessService,
+    private readonly events: EventsService,
   ) {}
 
   async list(userId: string, workspaceId: string, page = 1, pageSize = 20) {
@@ -41,6 +43,11 @@ export class NotificationsService {
       where: { id: notificationId },
       data: { readAt: new Date() },
     });
+    this.events.publish({
+      room: `user:${userId}`,
+      event: 'notification',
+      data: { workspaceId: notification.workspaceId },
+    });
     return { ok: true };
   }
 
@@ -49,6 +56,11 @@ export class NotificationsService {
     await this.prisma.notification.updateMany({
       where: { userId, workspaceId, readAt: null },
       data: { readAt: new Date() },
+    });
+    this.events.publish({
+      room: `user:${userId}`,
+      event: 'notification',
+      data: { workspaceId },
     });
     return { ok: true };
   }

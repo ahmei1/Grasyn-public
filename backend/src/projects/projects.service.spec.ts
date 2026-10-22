@@ -5,13 +5,19 @@ import { ProjectsService } from './projects.service';
 describe('Project archive invariants', () => {
   const prisma = {
     $transaction: jest.fn(),
-    project: { update: jest.fn(), create: jest.fn() },
+    project: { update: jest.fn(), create: jest.fn(), delete: jest.fn() },
+    task: { count: jest.fn() },
   };
   const access = {
     requireProject: jest.fn(),
     requireProjectManagement: jest.fn(),
   };
-  const events = { activity: jest.fn() };
+  const events = {
+    activity: jest.fn(),
+    audit: jest.fn(),
+    publish: jest.fn(),
+    run: (work: () => unknown) => work(),
+  };
   const service = new ProjectsService(
     prisma as never,
     access as never,
@@ -30,6 +36,7 @@ describe('Project archive invariants', () => {
     });
     access.requireProjectManagement.mockResolvedValue({ role: 'OWNER' });
     prisma.project.update.mockResolvedValue({ id: 'p', name: 'Project' });
+    prisma.task.count.mockResolvedValue(0);
   });
   it('prevents members from bypassing archive permissions through PATCH', async () => {
     access.requireProjectManagement.mockRejectedValue(new ForbiddenException());
@@ -66,5 +73,21 @@ describe('Project archive invariants', () => {
     await expect(
       service.update('owner', 'p', { dueDate: '2026-09-01' }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+  it('allows a project manager to delete a project', async () => {
+    prisma.project.delete.mockResolvedValue({ id: 'p' });
+
+    await expect(service.remove('owner', 'p')).resolves.toEqual({
+      deleted: true,
+    });
+    expect(prisma.project.delete).toHaveBeenCalledWith({ where: { id: 'p' } });
+  });
+  it('prevents a member from deleting a project', async () => {
+    access.requireProjectManagement.mockRejectedValue(new ForbiddenException());
+
+    await expect(service.remove('member', 'p')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(prisma.project.delete).not.toHaveBeenCalled();
   });
 });

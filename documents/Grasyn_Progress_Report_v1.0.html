@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GraSyn — Progress Report (Phases 1 to 3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --brand: #3368a0; --brand-soft: #e8f0f9; --brand-deep: #1e3a5f;
+    --ink: #0f172a; --muted: #5b6474; --line: #e3e7ee; --bg: #f7f8fb;
+    --ok: #15803d; --ok-soft: #dcfce7; --warn: #a16207; --warn-soft: #fef3c7;
+    --todo: #64748b; --todo-soft: #eef2f6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .page { max-width: 1040px; margin: 0 auto; padding: 0 28px 64px; }
+  h1, h2, h3 { font-family: Sora, sans-serif; letter-spacing: -0.02em; line-height: 1.2; }
+  h2 { font-size: 26px; margin: 56px 0 6px; }
+  h2 + .lead { margin-top: 0; }
+  h3 { font-size: 17px; margin: 0 0 8px; }
+  .lead { color: var(--muted); max-width: 760px; }
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--brand); margin: 0 0 6px; }
+
+  header.hero { background: radial-gradient(ellipse at 80% 20%, #1e3a5f 0%, #0a0a0b 65%); color: #fafafa; padding: 56px 0 48px; }
+  header.hero .page { padding-bottom: 0; }
+  header.hero h1 { font-size: 40px; margin: 10px 0 12px; max-width: 760px; }
+  header.hero p { color: rgba(255,255,255,.72); max-width: 720px; margin: 0; }
+  header.hero .eyebrow { color: #93b8e6; }
+  .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .meta span { border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 4px 12px; font-size: 13px; color: rgba(255,255,255,.85); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: -30px; position: relative; }
+  .stat { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; box-shadow: 0 6px 20px rgba(15,23,42,.06); }
+  .stat b { display: block; font: 700 28px/1.1 Sora, sans-serif; color: var(--brand-deep); }
+  .stat span { font-size: 13px; color: var(--muted); }
+
+  .grid { display: grid; gap: 14px; }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; break-inside: avoid; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .card ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .card li + li { margin-top: 3px; }
+  .card .tag { float: right; }
+  code { font: 12.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--todo-soft); border-radius: 5px; padding: 1px 5px; color: var(--ink); }
+
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .done { background: var(--ok-soft); color: var(--ok); }
+  .next { background: var(--warn-soft); color: var(--warn); }
+  .later { background: var(--todo-soft); color: var(--todo); }
+
+  table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: #f1f4f9; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  td.c { text-align: center; }
+  .yes { color: var(--ok); font-weight: 700; }
+  .no { color: #b91c1c; font-weight: 700; }
+
+  .timeline { position: relative; margin: 18px 0 0; padding-left: 26px; }
+  .timeline::before { content: ''; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 2px; background: var(--line); }
+  .step { position: relative; margin-bottom: 14px; }
+  .step::before { content: ''; position: absolute; left: -24px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 4px var(--brand-soft); }
+  .step time { font-size: 12.5px; font-weight: 700; color: var(--brand); }
+  .step p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+
+  .arch { display: grid; grid-template-columns: 1fr 70px 1.3fr 70px 1fr; align-items: center; margin-top: 18px; }
+  .arch .box { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .arch .box h3 { font-size: 15px; }
+  .arch .box p { margin: 0; font-size: 13px; color: var(--muted); }
+  .arch .wire { text-align: center; font-size: 11.5px; color: var(--muted); line-height: 1.3; }
+  .arch .wire::before { content: ''; display: block; height: 2px; margin: 0 6px 6px; background: linear-gradient(90deg, var(--brand), #93b8e6); }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .chips span { font-size: 11.5px; background: var(--brand-soft); color: var(--brand-deep); border-radius: 6px; padding: 2px 7px; }
+
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+  .flow span { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 13.5px; }
+  .flow i { color: var(--brand); font-style: normal; font-weight: 700; }
+
+  .bar { height: 10px; background: var(--todo-soft); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+  .bar > div { height: 100%; background: linear-gradient(90deg, var(--brand), #5b8fd0); }
+
+  footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+  @media (max-width: 820px) {
+    .stats, .g3 { grid-template-columns: repeat(2, 1fr); }
+    .g2 { grid-template-columns: 1fr; }
+    .arch { grid-template-columns: 1fr; gap: 8px; }
+    .arch .wire::before { display: none; }
+  }
+  @media print {
+    body { background: #fff; font-size: 13px; }
+    header.hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .stat, .card, table, .arch .box { box-shadow: none; }
+    h2 { break-after: avoid; }
+    section { break-inside: auto; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="page">
+    <p class="eyebrow">Progress report · v1.0 · 21 October 2026</p>
+    <h1>GraSyn: what we have built so far</h1>
+    <p>A collaboration workspace for small software teams, where tasks, decisions, conversations, and now GitHub code live in one connected place. This report covers everything finished in Phase 1 (the core workspace), Phase 2 (live teamwork: live updates, presence, project discussions, and meeting records), and Phase 3 (task keys and GitHub: pushes and pull requests linked to tasks), on both the backend and the frontend.</p>
+    <div class="meta">
+      <span>Backend: NestJS · Prisma · PostgreSQL · Socket.IO</span>
+      <span>Frontend: React · Vite · Tailwind · TanStack Query · GSAP</span>
+      <span>Private repository: github.com/ahmei1/Grasyn</span>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+
+  <div class="stats">
+    <div class="stat"><b>66</b><span>API endpoints, plus a live socket connection</span></div>
+    <div class="stat"><b>24</b><span>database tables, plus 6 status and role lists</span></div>
+    <div class="stat"><b>16</b><span>app screens, plus the landing story page</span></div>
+    <div class="stat"><b>107</b><span>automated tests passing (102 unit and 5 on a real database)</span></div>
+  </div>
+
+  <section>
+    <h2>Where the project stands</h2>
+    <p class="lead">Phases 1, 2, and 3 are complete. A project now holds the work, the conversation about it, and the code that implements it: tasks with short keys, a live discussion, meeting records whose action items become real tasks, and GitHub pushes and pull requests linked by those keys. Everything is stored so a later AI summary can read it. Video calls and AI summaries come next.</p>
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card">
+        <h3>Phase 1: core workspace <span class="tag done">Complete</span></h3>
+        <p>Accounts, teams and roles, invitations, projects, tasks with a Kanban board, comments, task history, notifications, a dashboard, and a new landing page.</p>
+        <div class="bar"><div style="width:100%"></div></div>
+      </div>
+      <div class="card">
+        <h3>Phase 2: real-time teamwork <span class="tag done">Complete</span></h3>
+        <p>The live connection, live updates, presence, live comments, project discussions, meeting records with action items that become tasks, and one stored project context for future summaries.</p>
+        <div class="bar"><div style="width:100%"></div></div>
+      </div>
+      <div class="card">
+        <h3>Phase 3: GitHub <span class="tag done">Complete</span></h3>
+        <p>Every task has a short key. Connecting a GitHub App records pushes and pull requests, links them when the key is in a branch, commit, or PR, and shows that code on the task and the project.</p>
+        <div class="bar"><div style="width:100%"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Timeline</h2>
+    <p class="lead">The main milestones, taken from the project's commit history.</p>
+    <div class="timeline">
+      <div class="step"><time>24 Aug 2026</time><h3>First working version</h3><p>The NestJS backend, the React frontend, and a first marketing site were set up.</p></div>
+      <div class="step"><time>15 Sep 2026</time><h3>Backend hardening</h3><p>Security work on the API, and the shell of the signed-in app (sidebar, routing, session handling).</p></div>
+      <div class="step"><time>1 Oct 2026</time><h3>Phase 1 feature build</h3><p>Sign-in, workspaces for owners, admins, and members, invitations, onboarding, projects, tasks, assignment, comments, and role management.</p></div>
+      <div class="step"><time>7 Oct 2026</time><h3>Polishing the collaboration flows</h3><p>Clearer permissions on screen, better empty and error states, and steadier forms.</p></div>
+      <div class="step"><time>8 Oct 2026</time><h3>Fixes from manual testing, and the new landing page</h3><p>Exact task history, descriptive notifications, a redesigned dashboard, and correct due-date handling. Also a scroll-driven landing story, due dates on board cards, link-sharing previews, and a mobile menu.</p></div>
+      <div class="step"><time>10 Oct 2026</time><h3>Phase 2 begins: live updates and presence</h3><p>A secure live connection, screens that refresh on their own, a list of who is online, and an "also here" indicator on projects and tasks.</p></div>
+      <div class="step"><time>11 Oct 2026</time><h3>Admin notifications</h3><p>Workspace admins and the owner now hear about task and comment activity in every project, not just their own.</p></div>
+      <div class="step"><time>13 Oct 2026</time><h3>Phase 2 complete: discussions and meetings</h3><p>A live discussion on every project, meeting records with notes, decisions, and action items that turn into tasks, and one "project context" endpoint that gathers it all for future summaries.</p></div>
+      <div class="step"><time>20 Oct 2026</time><h3>Task keys</h3><p>Each workspace has a prefix and a counter. New tasks get the next number inside the same save, existing tasks were numbered in creation order, and keys show on boards, lists, the dashboard, and the task page.</p></div>
+      <div class="step"><time>21 Oct 2026</time><h3>Phase 3 complete: GitHub</h3><p>Workspace admins connect a GitHub App. Signed webhooks store repositories, commits, and pull requests, link them by task key, notify the assignee when a PR is reviewed or merged, and add that code history to the project context.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How the pieces fit together</h2>
+    <p class="lead">The browser talks to one API server in two ways. Normal requests save and load data, and a live connection pushes "something changed" signals back. All data is stored in PostgreSQL.</p>
+    <div class="arch">
+      <div class="box">
+        <h3>Browser app</h3>
+        <p>React screens. Data is cached with TanStack Query and refreshed when the server signals a change.</p>
+        <div class="chips"><span>React 19</span><span>Vite</span><span>Tailwind v4</span><span>dnd-kit</span></div>
+      </div>
+      <div class="wire">REST + cookies<br />Socket.IO</div>
+      <div class="box">
+        <h3>NestJS API</h3>
+        <p>Modules for auth, users, workspaces, projects, tasks, comments, messages, meetings, GitHub, project context, activity, notifications, the dashboard, and realtime. Every request is checked against the user's workspace role.</p>
+        <div class="chips"><span>JWT cookies</span><span>argon2</span><span>Rate limits</span><span>Swagger docs</span></div>
+      </div>
+      <div class="wire">Prisma ORM</div>
+      <div class="box">
+        <h3>PostgreSQL</h3>
+        <p>Every team record carries its workspace id, which keeps each team's data separate.</p>
+        <div class="chips"><span>24 tables</span><span>Transactions</span><span>Row locks</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Backend</h2>
+    <p class="lead">The server holds the rules. The frontend hides buttons people can't use, but the backend always makes the final permission check.</p>
+
+    <h3 style="margin-top:20px">Features</h3>
+    <div class="grid g3">
+      <div class="card"><h3>Accounts and sessions</h3><ul><li>Register, sign in, sign out, and refresh the session</li><li>Passwords hashed with argon2</li><li>Short-lived access cookie (15 minutes) and a rotating refresh token, stored hashed</li><li>Sign-in limited to 8 attempts per minute</li></ul></div>
+      <div class="card"><h3>Workspaces and roles</h3><ul><li>Owner, admin, and member roles</li><li>Invite links that expire</li><li>Only the owner can invite admins</li><li>Owners and admins change roles and remove members</li></ul></div>
+      <div class="card"><h3>Projects</h3><ul><li>Create, edit, archive, restore, and delete</li><li>Status, priority, and start and due dates (start must come before due)</li><li>Project members</li><li>Only the creator or an admin can manage a project</li></ul></div>
+      <div class="card"><h3>Tasks</h3><ul><li>Four columns: To do, In progress, In review, Done</li><li>Priority, assignee, due date, and description</li><li>Safe reordering with a row lock, so two people moving cards never collide</li><li>Members can update only their own tasks, and only the status and description</li></ul></div>
+      <div class="card"><h3>History and notifications</h3><ul><li>Every change is recorded in plain words, for example "changed due date from 3 Oct to 10 Oct"</li><li>A separate audit trail for sensitive actions</li><li>Notifications with read and read-all</li><li>Saves that change nothing are not recorded</li></ul></div>
+      <div class="card"><h3>Dashboard</h3><ul><li>Real counts: open, overdue, due soon, and stale tasks</li><li>My tasks, recent projects, and recent activity</li><li>Due dates are compared in UTC, so time zones don't shift them</li></ul></div>
+      <div class="card"><h3>Project discussion <span class="tag done">Phase 2</span></h3><ul><li>Any workspace member can read and post in a project</li><li>Authors edit their own messages; authors and admins can delete</li><li>Loads 50 at a time, with older pages on request</li><li>New messages appear live for people with the project open, notify the project's followers, and stay out of the activity feed</li></ul></div>
+      <div class="card"><h3>Meeting records <span class="tag done">Phase 2</span></h3><ul><li>Title, start and end time, participants, notes, decisions, and action items</li><li>Invited people get a notification and can edit the record</li><li>Only the organizer, the project creator, or an admin can delete it</li><li>Note edits refresh open screens without filling the feed</li></ul></div>
+      <div class="card"><h3>Action items become tasks <span class="tag done">Phase 2</span></h3><ul><li>Uses the normal task rules, so members still can't set an assignee or due date</li><li>Each item can become a task only once, even if two people click at the same time</li><li>The task keeps a link back to its meeting</li></ul></div>
+      <div class="card"><h3>Task keys <span class="tag done">Phase 3</span></h3><ul><li>A short key per task, such as <code>GS-42</code>, from the workspace prefix and a number</li><li>The next number is taken inside the same save as the task, so two creates cannot share a number</li><li>Admins can change the prefix in workspace settings</li></ul></div>
+      <div class="card"><h3>GitHub connection <span class="tag done">Phase 3</span></h3><ul><li>Owners and admins connect the GitHub App from workspace settings</li><li>The redirect is tied to that workspace with a short-lived signed token</li><li>Each repository can be assigned to a project, which puts its code on that project's Code tab</li></ul></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Stored project context <span class="tag done">Phase 2</span></h3>
+      <p>One endpoint, <code>GET /projects/:id/context</code>, returns a project's tasks (including each task's number), its latest 200 discussion messages, every meeting with its participants, notes, decisions, and action items, the latest 100 activity entries, and now the latest 100 pull requests and 100 commits linked to the project. Lists read oldest first, like a timeline, and each task says which meeting it came from. This is the input the AI summaries will use.</p>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>GitHub webhooks and linking <span class="tag done">Phase 3</span></h3>
+      <p>GitHub signs every webhook with HMAC over the raw body. Each delivery id is stored, so a retry does not create the same commit twice. A push, pull request, or review is linked to a task when the workspace prefix and number appear in the branch name, commit message, or pull request title or description. Merging or reviewing a linked PR notifies the assignee. Merging does not move the task; if it is not already Done, the task page offers a "Mark as done" prompt.</p>
+    </div>
+
+    <h3 style="margin-top:26px">Data model</h3>
+    <table>
+      <tr><th>Area</th><th>Tables</th><th>What they store</th></tr>
+      <tr><td>People</td><td><code>User</code>, <code>RefreshToken</code></td><td>Accounts, and sign-in sessions that can be revoked</td></tr>
+      <tr><td>Teams</td><td><code>Workspace</code>, <code>WorkspaceMember</code>, <code>WorkspaceInvite</code></td><td>Teams, each person's role, and pending invitations</td></tr>
+      <tr><td>Work</td><td><code>Project</code>, <code>ProjectMember</code>, <code>Task</code>, <code>Comment</code></td><td>The work itself and the discussion on it</td></tr>
+      <tr><td>Conversations and meetings</td><td><code>Message</code>, <code>Meeting</code>, <code>MeetingParticipant</code>, <code>MeetingDecision</code>, <code>MeetingActionItem</code></td><td>Project discussions, and what each meeting decided and who follows up. One message shape can later serve task and workspace chat too.</td></tr>
+      <tr><td>Context</td><td><code>ActivityEvent</code>, <code>Notification</code>, <code>AuditEvent</code></td><td>What happened, who needs to know, and a record for accountability. Activity from GitHub has no Grasyn actor; the GitHub login is stored in the event details.</td></tr>
+      <tr><td>GitHub</td><td><code>GitHubInstallation</code>, <code>Repository</code>, <code>Commit</code>, <code>CommitTask</code>, <code>PullRequest</code>, <code>PullRequestTask</code>, <code>GitHubDelivery</code></td><td>The connected GitHub App, the repos it can see, commits and pull requests, which tasks they mention, and delivery ids so retries count once</td></tr>
+    </table>
+
+    <h3 style="margin-top:26px">API endpoints (66)</h3>
+    <table>
+      <tr><th>Module</th><th>Endpoints</th></tr>
+      <tr><td>Auth and users</td><td>register · login · refresh · logout · me · update profile</td></tr>
+      <tr><td>Workspaces</td><td>create · list · get · update (name or task prefix) · members · invite · view invite · accept invite · change role · remove member</td></tr>
+      <tr><td>Projects</td><td>create · list · get · update · archive · delete · add member · remove member</td></tr>
+      <tr><td>Tasks</td><td>create · list per project · list per workspace (with filters) · get · update · move on board</td></tr>
+      <tr><td>Comments</td><td>list · add</td></tr>
+      <tr><td>Messages</td><td>list with paging · post · edit · delete · mark the discussion read</td></tr>
+      <tr><td>Meetings</td><td>list per project · create · get · update · delete · add or remove a participant · add or remove a decision · add or remove an action item · turn an action item into a task</td></tr>
+      <tr><td>Project context</td><td>everything about one project, in one response</td></tr>
+      <tr><td>Activity</td><td>for a workspace · for a project · for a task</td></tr>
+      <tr><td>Notifications</td><td>list with unread count · mark one read · mark all read</td></tr>
+      <tr><td>GitHub</td><td>status · connect · disconnect · assign a repository to a project · code on a task · code on a project · setup callback from GitHub · signed webhook</td></tr>
+      <tr><td>Dashboard and health</td><td>dashboard summary · health check</td></tr>
+    </table>
+
+    <h3 style="margin-top:26px">Realtime layer (Phase 2)</h3>
+    <div class="grid g2">
+      <div class="card"><h3>Secure connection</h3><p>The live connection uses the same sign-in cookie as the API. A missing or invalid session is disconnected right away. Joining a workspace, project, or task "room" runs the same membership checks as the API.</p></div>
+      <div class="card"><h3>Only real changes are sent</h3><p>Signals are queued while a save is running and sent only after it succeeds. If the database rejects the save, nothing is sent, so other screens never refresh to data that doesn't exist.</p></div>
+      <div class="card"><h3>Presence</h3><p>The server tracks which project or task each open tab is showing. A person with several tabs counts once, and stays online until their last tab closes.</p></div>
+      <div class="card"><h3>Notifications for the right people</h3><p>The assignee, the project creator, and now every workspace admin and the owner. Each person gets one notification per change, and whoever made the change gets none.</p></div>
+    </div>
+    <div class="flow">
+      <span>Someone saves a change</span><i>→</i><span>Permission check</span><i>→</i><span>Database save</span><i>→</i><span>History and notifications written</span><i>→</i><span>Live signal sent</span><i>→</i><span>Teammates' screens refresh</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Who gets notified</h2>
+    <p class="lead">The current rules, including the fix for admins. Whoever made the change is never notified about their own action.</p>
+    <table>
+      <tr><th>Event</th><th class="c">Assignee</th><th class="c">Project creator</th><th class="c">Workspace owner and admins</th><th class="c">Person who made the change</th></tr>
+      <tr><td>New task created</td><td class="c yes">Yes (assigned)</td><td class="c yes">Yes</td><td class="c yes">Yes</td><td class="c no">No</td></tr>
+      <tr><td>Task changed (status, priority, date, details)</td><td class="c yes">Yes</td><td class="c yes">Yes</td><td class="c yes">Yes</td><td class="c no">No</td></tr>
+      <tr><td>Task reassigned</td><td class="c yes">Yes (new assignee)</td><td class="c yes">Yes</td><td class="c yes">Yes</td><td class="c no">No</td></tr>
+      <tr><td>New comment</td><td class="c yes">Yes</td><td class="c yes">Yes</td><td class="c yes">Yes</td><td class="c no">No</td></tr>
+      <tr><td>Linked pull request reviewed or merged</td><td class="c yes">Yes</td><td class="c no">No</td><td class="c no">No</td><td class="c">— (GitHub user)</td></tr>
+    </table>
+    <p class="lead" style="margin-top:10px;font-size:13.5px">If one person holds several of these roles, for example an admin who is also the assignee, they still get only one notification. When someone is added to a meeting, they are notified too, unless they added themselves. A new discussion message notifies the project creator, the project's members, the workspace owner and admins, anyone with a task in the project, and anyone who has posted in that discussion. Each person keeps at most one unread discussion notification per project, which updates with the latest message, and it clears when they open the Discussion tab.</p>
+  </section>
+
+  <section>
+    <h2>Frontend</h2>
+    <p class="lead">One React app with two sides: a public landing story, and the signed-in workspace.</p>
+
+    <h3 style="margin-top:20px">Screens</h3>
+    <table>
+      <tr><th>Screen</th><th>What people can do there</th></tr>
+      <tr><td>Landing page</td><td>A scroll-driven story: a dark animated hero, a "lights on" transition, then chapters on the problem, its cost, the idea, how it works, features, and pricing. Includes a mobile menu and link-sharing previews.</td></tr>
+      <tr><td>Sign in and register</td><td>Email and password, a password strength meter, and smooth page transitions. Google and GitHub buttons are shown but marked as not yet available.</td></tr>
+      <tr><td>Onboarding</td><td>Create your first workspace, or accept an invitation.</td></tr>
+      <tr><td>Dashboard</td><td>Overview counts, my open and overdue tasks, due soon, stale work, recent projects, and team activity.</td></tr>
+      <tr><td>Projects and project detail</td><td>Browse, create, edit, archive, and delete projects. The project page has four tabs: Tasks, a live Discussion, Meetings, and Code (pull requests and commits from assigned repositories, plus anything that names a task in the project).</td></tr>
+      <tr><td>Meeting page</td><td>The meeting's time and participants, shared notes, decisions, and action items. Each action item has a "Create task" button, and once converted it links to the task and shows its status.</td></tr>
+      <tr><td>Kanban board</td><td>Drag cards between columns. Cards show the task key, the due date, and an overdue warning. Each person can move only the cards they are allowed to.</td></tr>
+      <tr><td>Task detail</td><td>The task key (with copy), edit fields according to your role, a Code section of linked commits and pull requests, a "Mark as done" prompt after a merge, the full change history, and comments.</td></tr>
+      <tr><td>My tasks, Activity, Notifications</td><td>A personal task list, a workspace-wide history feed, and notifications. The unread badge clears when the notifications page opens.</td></tr>
+      <tr><td>Settings and profile</td><td>Invite people, change roles, remove members, change the task-key prefix, connect or disconnect GitHub, assign repositories to projects, and edit your profile.</td></tr>
+    </table>
+
+    <h3 style="margin-top:26px">What makes it feel good</h3>
+    <div class="grid g3">
+      <div class="card"><h3>Live without refreshing</h3><p>When a teammate moves a task or comments, the board, task page, dashboard, and notification badge update by themselves.</p></div>
+      <div class="card"><h3>See your team</h3><p>The sidebar shows who is online now. Projects, boards, and tasks show the faces of anyone else on the same page.</p></div>
+      <div class="card"><h3>Clear permissions</h3><p>Each screen says what you are allowed to do, for example "Execution access", and hides the actions you can't take.</p></div>
+      <div class="card"><h3>Steady layout</h3><p>The sidebar stays in place and only the content area scrolls. Every screen has loading, empty, and error states.</p></div>
+      <div class="card"><h3>Motion with care</h3><p>The landing animations use GSAP and Lenis smooth scrolling. People who turn off motion in their system settings get a calm, static version.</p></div>
+      <div class="card"><h3>Fast to load</h3><p>The animation libraries load only on the landing page (about 68 KB compressed), so the workspace app stays light.</p></div>
+      <div class="card"><h3>Talk where the work is</h3><p>Each project has its own discussion. Enter sends, Shift+Enter adds a line, and new messages appear for everyone on the page.</p></div>
+      <div class="card"><h3>Meetings that lead to work</h3><p>Decisions and follow-ups are written down during the meeting, and a follow-up becomes a board task in one click.</p></div>
+      <div class="card"><h3>Edits that don't collide</h3><p>Unsaved meeting notes are kept while teammates make changes, and the app clearly marks what is not saved yet.</p></div>
+      <div class="card"><h3>Code next to the task</h3><p>Put the task key in a branch, commit, or pull request, and that work appears on the task and on the project's Code tab as it happens.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Quality checks</h2>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h3>Automated tests: 107 passing</h3>
+        <ul>
+          <li>Permissions for every role: who can create, edit, move, and manage</li>
+          <li>Sign-in, sessions, and configuration checks, including a complete or half-filled GitHub App setup</li>
+          <li>Notification rules for tasks, comments, and meeting invitations</li>
+          <li>Plain-language task history, including GitHub pushes, reviews, and merges</li>
+          <li>Live connection: rejects bad sessions, checks room access, and never sends signals for failed saves</li>
+          <li>Presence: merges tabs, handles leaving and switching workspaces</li>
+          <li>Discussions: paging, author-only edits, admin deletes, and who gets notified</li>
+          <li>Meetings: who can edit, times that make sense, and an action item can't become two tasks</li>
+          <li>GitHub helpers: app tokens verify with RS256, and webhook signatures reject a changed body or the wrong secret</li>
+          <li>Task keys: prefix from a workspace name, unique numbers from text, and no match inside a longer word</li>
+          <li>5 end-to-end tests against a real PostgreSQL database, including a full discussion, meeting, project-context run, and a GitHub connect, signed webhook, link-by-key, and duplicate-delivery run</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Other checks</h3>
+        <ul>
+          <li>Code style checks (lint) and production builds pass for both apps</li>
+          <li>The landing page was checked in a browser on desktop, on mobile, and with motion turned off</li>
+          <li>Manual testing with several accounts: tasks, comments, online status, and "also here" all confirmed working</li>
+          <li>Discussions and meetings are covered by the automated tests above and are ready for the same hands-on testing</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What comes next</h2>
+    <p class="lead">Finished work, and what follows it, in the planned order.</p>
+    <table>
+      <tr><th>Step</th><th>Status</th><th>Notes</th></tr>
+      <tr><td>1. Secure live connection and workspace rooms</td><td><span class="tag done">Done</span></td><td>Cookie sign-in, with room access checked like the API</td></tr>
+      <tr><td>2. Live task, comment, and notification updates</td><td><span class="tag done">Done</span></td><td>Signals are sent only after a successful save</td></tr>
+      <tr><td>3. Presence: who is online and who is here</td><td><span class="tag done">Done</span></td><td>Kept in server memory; one server for now</td></tr>
+      <tr><td>4. Live comments</td><td><span class="tag done">Done</span></td><td>New comments appear on open task pages right away</td></tr>
+      <tr><td>5. Project discussion threads</td><td><span class="tag done">Done</span></td><td>One message model, ready for task and workspace chat later</td></tr>
+      <tr><td>6. Meeting records and action items</td><td><span class="tag done">Done</span></td><td>Notes and decisions, with action items that become real tasks</td></tr>
+      <tr><td>6b. Stored project context</td><td><span class="tag done">Done</span></td><td>One endpoint that gathers tasks, discussion, meetings, and now code</td></tr>
+      <tr><td>7. Task keys</td><td><span class="tag done">Done</span></td><td>Workspace prefix plus a number, shown throughout the app</td></tr>
+      <tr><td>8. GitHub App, webhooks, and code views</td><td><span class="tag done">Done</span></td><td>Connect from workspace settings; code links by task key</td></tr>
+      <tr><td>9. Video calls</td><td><span class="tag next">Next</span></td><td>Using LiveKit, attached to a meeting record</td></tr>
+      <tr><td>10. AI summaries</td><td><span class="tag later">Planned</span></td><td>Reads the stored project context, including code history</td></tr>
+    </table>
+
+    <h3 style="margin-top:26px">Known limits to keep in mind</h3>
+    <div class="grid g2">
+      <div class="card"><p><b>Presence covers one server.</b> It is kept in memory. If the app later runs on several servers, it will need a shared store such as Redis.</p></div>
+      <div class="card"><p><b>Google and GitHub sign-in are not built yet.</b> The buttons are there but clearly marked as unavailable.</p></div>
+      <div class="card"><p><b>The link-preview image needs the real domain.</b> Once the site is live, the preview tag must use the full address.</p></div>
+      <div class="card"><p><b>Notifications are in-app only.</b> There are no email or push notifications yet.</p></div>
+      <div class="card"><p><b>Discussions are plain text.</b> There are no @mentions, files, or reactions yet.</p></div>
+      <div class="card"><p><b>Meeting times use each person's browser time zone.</b> There is no calendar sync or reminder yet.</p></div>
+      <div class="card"><p><b>Changing a task prefix stops old keys from linking.</b> Code that still mentions <code>OLD-12</code> will not match the new prefix.</p></div>
+      <div class="card"><p><b>Disconnecting GitHub in Grasyn does not uninstall the app on GitHub.</b> Webhooks for that install are ignored until someone connects it again, or uninstalls it on GitHub.</p></div>
+      <div class="card"><p><b>Local GitHub webhooks need a relay.</b> GitHub cannot reach localhost, so a tool such as smee.io forwards signed events to the API.</p></div>
+    </div>
+  </section>
+
+  <footer>This report is updated at the end of every phase, from the project source and commit history. Current edition: 21 October 2026.</footer>
+</main>
+</body>
+</html>

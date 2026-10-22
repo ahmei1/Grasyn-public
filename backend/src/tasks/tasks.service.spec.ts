@@ -16,6 +16,7 @@ describe('TasksService permissions', () => {
   const events = {
     activity: jest.fn(),
     notify: jest.fn(),
+    run: (work: () => unknown) => work(),
   };
   const service = new TasksService(
     prisma as never,
@@ -39,7 +40,7 @@ describe('TasksService permissions', () => {
     await expect(
       service.create('member', 'project', {
         title: 'Task',
-        priority: 'HIGH' as never,
+        priority: 'HIGH',
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -57,7 +58,7 @@ describe('TasksService permissions', () => {
     );
 
     await expect(
-      service.update('member', 'task', { status: 'DONE' as never }),
+      service.update('member', 'task', { status: 'DONE' }),
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
@@ -75,7 +76,7 @@ describe('TasksService permissions', () => {
 
     await expect(
       service.move('member', 'task', {
-        status: 'IN_PROGRESS' as never,
+        status: 'IN_PROGRESS',
         position: 0,
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);

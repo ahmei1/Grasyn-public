@@ -62,6 +62,11 @@ export class ProjectsController {
     return this.projects.archive(user.id, projectId);
   }
 
+  @Delete('projects/:projectId')
+  remove(@CurrentUser() user: AuthUser, @Param('projectId') projectId: string) {
+    return this.projects.remove(user.id, projectId);
+  }
+
   @Post('projects/:projectId/members')
   addMember(
     @CurrentUser() user: AuthUser,

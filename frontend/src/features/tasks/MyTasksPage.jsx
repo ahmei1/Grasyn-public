@@ -16,6 +16,7 @@ import {
 } from '../../shared/lib/labels'
 import { Badge } from '../../shared/ui/Badge'
 import { Select } from '../../shared/ui/Select'
+import { TaskKey } from '../../shared/ui/TaskKey'
 import {
   EmptyState,
   PageHeader,
@@ -106,7 +107,10 @@ export function MyTasksPage() {
                 className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-surface-muted"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-medium">{task.title}</p>
+                  <p className="flex min-w-0 items-baseline gap-2">
+                    <TaskKey task={task} />
+                    <span className="truncate font-medium">{task.title}</span>
+                  </p>
                   <p className="mt-0.5 text-caption text-muted-foreground">
                     {task.project?.name}
                     {task.dueDate ? ` · ${formatDate(task.dueDate)}` : ''}

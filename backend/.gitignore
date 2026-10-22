@@ -8,6 +8,9 @@
 .env.local
 .env.*.local
 
+# Private keys, such as the GitHub App key
+*.pem
+
 # Prisma
 /generated
 

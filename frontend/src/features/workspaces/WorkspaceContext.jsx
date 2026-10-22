@@ -133,6 +133,17 @@ export function WorkspaceProvider({ children }) {
         return created
       },
 
+      /** Swaps in a workspace returned by the API, keeping the caller's role. */
+      replaceWorkspace(updated) {
+        setWorkspaces((current) =>
+          current.map((workspace) =>
+            workspace.id === updated.id
+              ? { ...workspace, ...updated, role: workspace.role }
+              : workspace,
+          ),
+        )
+      },
+
       reload: loadWorkspaces,
     }
   }, [workspaces, activeId, status, error, isAuthenticated, loadWorkspaces])

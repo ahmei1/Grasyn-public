@@ -26,34 +26,46 @@ export class ProjectsService {
   async create(userId: string, workspaceId: string, dto: CreateProjectDto) {
     await this.access.requireMembership(userId, workspaceId);
     this.validateDates(dto.startDate, dto.dueDate);
-    return this.prisma.$transaction(async (tx) => {
-      const project = await tx.project.create({
-        data: {
-          workspaceId,
-          ownerId: userId,
-          name: dto.name.trim(),
-          description: dto.description?.trim() ?? '',
-          priority: dto.priority,
-          status: dto.status,
-          archivedAt: dto.status === ProjectStatus.ARCHIVED ? new Date() : null,
-          startDate: dto.startDate ? new Date(dto.startDate) : undefined,
-          dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
-          members: { create: { userId } },
-        },
-        include: { members: { include: memberSelect } },
-      });
-      await this.events.activity(
-        {
-          workspaceId,
-          actorId: userId,
-          projectId: project.id,
-          type: 'project.created',
-          metadata: { name: project.name },
-        },
-        tx,
-      );
-      return { project };
-    });
+    return this.events.run(() =>
+      this.prisma.$transaction(async (tx) => {
+        const project = await tx.project.create({
+          data: {
+            workspaceId,
+            ownerId: userId,
+            name: dto.name.trim(),
+            description: dto.description?.trim() ?? '',
+            priority: dto.priority,
+            status: dto.status,
+            archivedAt:
+              dto.status === ProjectStatus.ARCHIVED ? new Date() : null,
+            startDate: dto.startDate ? new Date(dto.startDate) : undefined,
+            dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+            members: { create: { userId } },
+          },
+          include: { members: { include: memberSelect } },
+        });
+        await this.events.activity(
+          {
+            workspaceId,
+            actorId: userId,
+            projectId: project.id,
+            type: 'project.created',
+            metadata: { name: project.name },
+          },
+          tx,
+        );
+        await this.events.audit(
+          {
+            workspaceId,
+            actorId: userId,
+            action: 'project.created',
+            metadata: { projectId: project.id, name: project.name },
+          },
+          tx,
+        );
+        return { project };
+      }),
+    );
   }
 
   async list(
@@ -107,70 +119,136 @@ export class ProjectsService {
       dto.startDate === undefined ? project.startDate : dto.startDate,
       dto.dueDate === undefined ? project.dueDate : dto.dueDate,
     );
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.project.update({
-        where: { id: project.id },
-        data: {
-          ...(dto.name ? { name: dto.name.trim() } : {}),
-          ...(dto.description !== undefined
-            ? { description: dto.description.trim() }
-            : {}),
-          ...(dto.priority ? { priority: dto.priority } : {}),
-          ...(dto.status
-            ? {
-                status: dto.status,
-                archivedAt:
-                  dto.status === ProjectStatus.ARCHIVED
-                    ? (project.archivedAt ?? new Date())
-                    : null,
-              }
-            : {}),
-          ...(dto.startDate !== undefined
-            ? { startDate: dto.startDate ? new Date(dto.startDate) : null }
-            : {}),
-          ...(dto.dueDate !== undefined
-            ? { dueDate: dto.dueDate ? new Date(dto.dueDate) : null }
-            : {}),
-        },
-        include: { members: { include: memberSelect } },
-      });
-      await this.events.activity(
-        {
-          workspaceId: project.workspaceId,
-          actorId: userId,
-          projectId: project.id,
-          type: 'project.updated',
-          metadata: { name: updated.name },
-        },
-        tx,
-      );
-      return { project: updated };
-    });
+    return this.events.run(() =>
+      this.prisma.$transaction(async (tx) => {
+        const updated = await tx.project.update({
+          where: { id: project.id },
+          data: {
+            ...(dto.name ? { name: dto.name.trim() } : {}),
+            ...(dto.description !== undefined
+              ? { description: dto.description.trim() }
+              : {}),
+            ...(dto.priority ? { priority: dto.priority } : {}),
+            ...(dto.status
+              ? {
+                  status: dto.status,
+                  archivedAt:
+                    dto.status === ProjectStatus.ARCHIVED
+                      ? (project.archivedAt ?? new Date())
+                      : null,
+                }
+              : {}),
+            ...(dto.startDate !== undefined
+              ? { startDate: dto.startDate ? new Date(dto.startDate) : null }
+              : {}),
+            ...(dto.dueDate !== undefined
+              ? { dueDate: dto.dueDate ? new Date(dto.dueDate) : null }
+              : {}),
+          },
+          include: { members: { include: memberSelect } },
+        });
+        await this.events.activity(
+          {
+            workspaceId: project.workspaceId,
+            actorId: userId,
+            projectId: project.id,
+            type: 'project.updated',
+            metadata: {
+              name: updated.name,
+              changes: changedProjectFields(project, updated),
+            },
+          },
+          tx,
+        );
+        await this.events.audit(
+          {
+            workspaceId: project.workspaceId,
+            actorId: userId,
+            action: 'project.updated',
+            metadata: {
+              projectId: project.id,
+              name: updated.name,
+              changes: changedProjectFields(project, updated),
+            },
+          },
+          tx,
+        );
+        return { project: updated };
+      }),
+    );
   }
 
   async archive(userId: string, projectId: string) {
     const project = await this.access.requireProject(userId, projectId);
     await this.access.requireProjectManagement(userId, project);
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.project.update({
-        where: { id: project.id },
-        data: {
-          archivedAt: new Date(),
-          status: ProjectStatus.ARCHIVED,
-        },
-      });
-      await this.events.activity(
-        {
-          workspaceId: project.workspaceId,
-          actorId: userId,
-          projectId: project.id,
-          type: 'project.archived',
-          metadata: { name: project.name },
-        },
-        tx,
-      );
-      return { project: updated };
-    });
+    return this.events.run(() =>
+      this.prisma.$transaction(async (tx) => {
+        const updated = await tx.project.update({
+          where: { id: project.id },
+          data: {
+            archivedAt: new Date(),
+            status: ProjectStatus.ARCHIVED,
+          },
+        });
+        await this.events.activity(
+          {
+            workspaceId: project.workspaceId,
+            actorId: userId,
+            projectId: project.id,
+            type: 'project.archived',
+            metadata: { name: project.name },
+          },
+          tx,
+        );
+        await this.events.audit(
+          {
+            workspaceId: project.workspaceId,
+            actorId: userId,
+            action: 'project.archived',
+            metadata: { projectId: project.id, name: project.name },
+          },
+          tx,
+        );
+        return { project: updated };
+      }),
+    );
+  }
+
+  async remove(userId: string, projectId: string) {
+    const project = await this.access.requireProject(userId, projectId);
+    await this.access.requireProjectManagement(userId, project);
+    return this.events.run(() =>
+      this.prisma.$transaction(async (tx) => {
+        const taskCount = await tx.task.count({
+          where: { projectId: project.id },
+        });
+        await this.events.audit(
+          {
+            workspaceId: project.workspaceId,
+            actorId: userId,
+            action: 'project.deleted',
+            metadata: {
+              projectId: project.id,
+              name: project.name,
+              taskCount,
+            },
+          },
+          tx,
+        );
+        await tx.project.delete({ where: { id: project.id } });
+        this.events.publish({
+          room: `workspace:${project.workspaceId}`,
+          event: 'activity',
+          data: {
+            type: 'project.deleted',
+            workspaceId: project.workspaceId,
+            projectId: project.id,
+            taskId: null,
+          },
+        });
+        return { deleted: true };
+      }),
+    );
   }
 
   async addMember(userId: string, projectId: string, memberUserId: string) {
@@ -211,4 +289,40 @@ export class ProjectsService {
       throw new BadRequestException('Start date must be on or before due date');
     }
   }
+}
+
+function changedProjectFields(
+  previous: {
+    name: string;
+    description: string;
+    status: ProjectStatus;
+    priority: string;
+    startDate: Date | null;
+    dueDate: Date | null;
+  },
+  next: {
+    name: string;
+    description: string;
+    status: ProjectStatus;
+    priority: string;
+    startDate: Date | null;
+    dueDate: Date | null;
+  },
+) {
+  const changes: string[] = [];
+  if (previous.name !== next.name) changes.push('name');
+  if (previous.description !== next.description) changes.push('description');
+  if (previous.status !== next.status) changes.push('status');
+  if (previous.priority !== next.priority) changes.push('priority');
+  if (dateKey(previous.startDate) !== dateKey(next.startDate)) {
+    changes.push('startDate');
+  }
+  if (dateKey(previous.dueDate) !== dateKey(next.dueDate)) {
+    changes.push('dueDate');
+  }
+  return changes;
+}
+
+function dateKey(value: Date | null) {
+  return value ? value.toISOString() : null;
 }

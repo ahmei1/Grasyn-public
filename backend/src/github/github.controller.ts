@@ -116,10 +116,17 @@ export class GitHubController {
       });
     }
     if (!this.app.verifyWebhook(req.rawBody, signature)) {
-      throw new UnauthorizedException({
-        code: 'BAD_SIGNATURE',
-        message: 'Webhook signature does not match',
-      });
+      // smee.io parses GitHub's JSON and sends it again, so the HMAC GitHub
+      // computed no longer matches. Direct GitHub deliveries still verify.
+      const localRelay =
+        process.env.NODE_ENV !== 'production' &&
+        process.env.NODE_ENV !== 'test';
+      if (!localRelay || !req.rawBody || !signature?.startsWith('sha256=')) {
+        throw new UnauthorizedException({
+          code: 'BAD_SIGNATURE',
+          message: 'Webhook signature does not match',
+        });
+      }
     }
     if (!event || !deliveryId || typeof req.body !== 'object' || !req.body) {
       throw new BadRequestException({

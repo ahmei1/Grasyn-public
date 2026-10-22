@@ -20,6 +20,13 @@ export function setupApp(app: NestExpressApplication) {
   app.use(helmet());
   app.use(cookieParser());
   app.use((req: Request, res: Response, next: NextFunction) => {
+    const path = req.originalUrl.split('?')[0];
+    // GitHub (and the local smee relay) is not a browser. smee forwards an
+    // Origin header that would otherwise fail this check.
+    if (path === '/api/github/webhook') {
+      next();
+      return;
+    }
     if (
       !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
       req.headers.origin &&
